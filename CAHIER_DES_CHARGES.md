@@ -632,3 +632,27 @@ document avec Xavier, puis seulement ensuite coder.
   dépassée depuis plus de 60 jours. Section 6 du cahier des charges révisée
   pour autoriser explicitement une interface web STATIQUE (générée puis
   publiée), tout en maintenant l'exclusion d'un serveur dynamique.
+- 27/06/2026 (suite, déploiement réel et premier bug en conditions réelles)
+  — Première mise en production effective, avec plusieurs obstacles
+  résolus en cours de route : (1) le premier push avait livré un fichier
+  zip non extrait sur GitHub plutôt que les fichiers individuels ; (2) un
+  clone dupliqué (dossier imbriqué) lors de la correction ; (3)
+  `.github/workflows/veille-hebdomadaire.yml` était resté à la racine du
+  dépôt au lieu de `.github/workflows/` (le dossier caché n'avait pas été
+  reconstitué par l'extraction du zip), empêchant GitHub Actions de
+  détecter le workflow. Une fois ces trois points corrigés et le workflow
+  déclenché manuellement (`workflow_dispatch`), la page s'est publiée avec
+  succès sur GitHub Pages. **Premier vrai retour utilisateur sur la page en
+  ligne** : taper "Sport" dans le champ de recherche remontait aussi
+  "Transport" — exactement la même classe de bug que celui déjà corrigé
+  dans `categorisation.py` (matching par sous-chaîne plutôt que par mot),
+  mais cette fois dans le JavaScript de `generer_html.py`, jamais protégé
+  de la même façon. Corrigé en JS par découpage en mots + `startsWith()`
+  (pas une regex avec `\b`, dont une première tentative a généré du
+  JavaScript cassé à cause d'échappements en cascade entre Python et JS —
+  l'avertissement `SyntaxWarning` de Python à la compilation a permis de
+  détecter ce problème avant publication). Permet toujours la recherche
+  par préfixe (taper "agric" trouve "agricole"), juste plus la sous-chaîne
+  arbitraire en milieu de mot. Vérifié par un vrai test DOM (jsdom) sur les
+  cas exacts signalés, conservé comme test Python de présence de la bonne
+  logique (sans dépendance Node) dans `test_generer_html.py`.

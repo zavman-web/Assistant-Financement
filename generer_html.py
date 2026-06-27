@@ -452,11 +452,27 @@ def generer_page_html(
 
   function filtrerDonnees(texteRecherche) {{
     if (!texteRecherche) return donnees;
+    // CORRIGÉ LE 27/06/2026 suite à un retour utilisateur en conditions
+    // réelles (première vraie utilisation de la page publiée) : taper
+    // "Sport" remontait aussi "Transport" à cause d'un matching par
+    // sous-chaîne brute (.includes()) — exactement la même classe de bug
+    // que celui corrigé dans categorisation.py (mot in texte). Ici, la
+    // contrainte est différente : on veut quand même permettre une
+    // recherche par préfixe utile (taper "agric" doit trouver "agricole"),
+    // donc on découpe le texte cible en mots et on vérifie qu'au moins un
+    // mot COMMENCE PAR le terme recherché — pas une regex avec échappement
+    // (une première tentative avec regex a généré un code JS cassé à cause
+    // d'échappements en cascade entre Python et JavaScript ; cette approche
+    // par découpage de chaîne est plus simple et ne dépend d'aucun
+    // échappement de caractères spéciaux).
     const q = texteRecherche.toLowerCase();
+    const unMotCommencePar = (texte) =>
+      texte.toLowerCase().split(/[^a-z0-9àâäéèêëïîôöùûüç]+/i).some(mot => mot.startsWith(q));
+
     return donnees.filter(d =>
-      d.titre.toLowerCase().includes(q) ||
-      d.source.toLowerCase().includes(q) ||
-      d.tags.some(t => t.toLowerCase().includes(q))
+      unMotCommencePar(d.titre) ||
+      unMotCommencePar(d.source) ||
+      d.tags.some(t => unMotCommencePar(t))
     );
   }}
 

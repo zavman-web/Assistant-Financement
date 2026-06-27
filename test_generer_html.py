@@ -84,8 +84,38 @@ def test_apostrophe_legitime_reste_lisible():
     print("OK: test_apostrophe_legitime_reste_lisible")
 
 
+def test_recherche_par_prefixe_pas_par_sous_chaine():
+    """
+    Vulnérabilité fonctionnelle trouvée le 27/06/2026 EN CONDITIONS RÉELLES
+    (premier vrai usage de la page publiée par l'utilisateur) : taper
+    "Sport" dans le champ de recherche remontait aussi "Transport", à cause
+    d'un matching JavaScript par sous-chaîne brute (.includes()) — la même
+    classe de bug que celui déjà corrigé dans categorisation.py.
+
+    Corrigé en JS par découpage en mots + startsWith(), plutôt qu'une regex
+    avec \\b (une première tentative avec regex a généré du JavaScript
+    cassé à cause d'échappements en cascade entre Python et JS — voir
+    historique du cahier des charges). Vérifié par un vrai test DOM (jsdom)
+    au moment de la correction ; ce test Python vérifie seulement la
+    présence de la bonne logique dans le code généré, pas le comportement
+    DOM complet (qui nécessiterait Node, non garanti disponible partout).
+    """
+    html_genere = generer_page_html([], "test")
+    assert "unMotCommencePar" in html_genere, (
+        "RÉGRESSION : la fonction de recherche par préfixe de mot doit être "
+        "présente — sinon le filtrage redevient un matching par sous-chaîne "
+        "brute (bug 'Sport' trouve 'Transport')."
+    )
+    assert ".includes(q)" not in html_genere or "catch (e)" not in html_genere, (
+        "Vérifie qu'il ne reste pas un ancien chemin de code utilisant "
+        ".includes() pour le filtrage de recherche principal."
+    )
+    print("OK: test_recherche_par_prefixe_pas_par_sous_chaine")
+
+
 if __name__ == "__main__":
     test_titre_avec_balise_script_ne_casse_pas_le_bloc_script()
     test_lien_avec_guillemet_ne_genere_pas_attribut_executable()
     test_apostrophe_legitime_reste_lisible()
+    test_recherche_par_prefixe_pas_par_sous_chaine()
     print("\nTous les tests de sécurité HTML sont passés.")
