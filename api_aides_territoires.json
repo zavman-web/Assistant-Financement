@@ -1,0 +1,79 @@
+{
+  "nom": "API Aides-territoires",
+  "statut_verification": "Confirmé par accès direct à l'endpoint et à la documentation officielle le 22/06/2026. Les champs ci-dessous sont reproduits depuis la documentation publique https://aides-territoires.beta.gouv.fr/data/ et depuis une requête réelle sur l'endpoint.",
+  "editeur": "ANCT / Incubateur des Territoires (startup d'État beta.gouv.fr), code source MTES-MCT/aides-territoires sur GitHub",
+  "licence": "Licence Ouverte v2.0 (Etalab) — réutilisation libre, y compris commerciale, sous réserve de mentionner la paternité (lien vers Aides-territoires) et la date de dernière mise à jour de la donnée réutilisée.",
+
+  "endpoint": {
+    "url": "https://aides-territoires.beta.gouv.fr/api/aids/",
+    "methode": "GET",
+    "auth": "Aucune authentification constatée pour une lecture simple de la liste des aides actives. L'API est documentée comme étant en lecture seule (read-only) côté code source.",
+    "format_reponse": "JSON, paginé façon Django REST Framework standard : { count, next, previous, results: [...] }",
+    "exemple_appel": "https://aides-territoires.beta.gouv.fr/api/aids/?version=1.1",
+    "note_versionnement": "Le paramètre `version` doit TOUJOURS être fixé explicitement dans l'URL pour éviter qu'une évolution du format de réponse ne casse le pipeline VEILLE-FI sans préavis. Au 22/06/2026 la documentation indiquait la version courante comme '1.8.1', mais l'appel réel testé avec version=1.1 a fonctionné et retourné une réponse complète (count: 1650+). Recommandation : tester au premier run avec la version documentée la plus récente, et prévoir un repli automatique sur une version antérieure connue si l'appel échoue."
+  },
+
+  "champs_disponibles": [
+    {"champ": "id", "type": "integer", "description": "Identifiant numérique interne de l'aide"},
+    {"champ": "slug", "type": "string", "description": "Fragment d'URL identifiant l'aide de façon lisible"},
+    {"champ": "url", "type": "url relative", "description": "Adresse de l'aide sur Aides-territoires"},
+    {"champ": "name", "type": "string", "description": "Nom de l'aide"},
+    {"champ": "short_title", "type": "string", "description": "Version courte du titre"},
+    {"champ": "financers", "type": "array[string]", "description": "Porteurs de l'aide — clé pour identifier l'échelon (État, Région, ADEME, EPCI, etc.)"},
+    {"champ": "instructors", "type": "array[string]", "description": "Instructeurs de l'aide si différents des porteurs"},
+    {"champ": "description", "type": "html", "description": "Description complète de l'aide"},
+    {"champ": "eligibility", "type": "html", "description": "Conditions d'éligibilité"},
+    {"champ": "tags", "type": "array[string]", "description": "Mots-clés associés"},
+    {"champ": "perimeter", "type": "string", "description": "Périmètre géographique d'application — CHAMP CLÉ pour filtrer La Réunion / Saint-Benoît / CIREST, ex. 'La Rochelle (Commune – 17000)' ; à confirmer si une commune ou EPCI réunionnais apparaît avec une mention '974' ou 'Réunion' explicite"},
+    {"champ": "mobilization_steps", "type": "array[string]", "description": "Étapes du projet où l'aide est mobilisable (réflexion, mise en œuvre, valorisation...)"},
+    {"champ": "origin_url", "type": "url", "description": "Adresse de publication officielle de l'aide"},
+    {"champ": "application_url", "type": "url", "description": "Adresse de dépôt de candidature"},
+    {"champ": "targeted_audiences", "type": "array[string]", "description": "Public concerné — ex. 'Communes', 'EPCI à fiscalité propre', 'Départements', 'Régions', 'Établissement public' — CHAMP CLÉ pour filtrer côté commune"},
+    {"champ": "aid_types", "type": "array[string]", "description": "Types d'aide — ex. 'Subvention', 'Ingénierie technique', 'Ingénierie financière', 'Ingénierie juridique / administrative'"},
+    {"champ": "destinations", "type": "array[string]", "description": "Types de dépenses soutenues — 'Dépenses de fonctionnement' / 'Dépenses d'investissement'"},
+    {"champ": "start_date", "type": "date|null", "description": "Date d'ouverture du guichet"},
+    {"champ": "predeposit_date", "type": "date|null", "description": "Date de pré-dépôt, le cas échéant"},
+    {"champ": "submission_deadline", "type": "date|null", "description": "CHAMP CLÉ pour VEILLE-FI : date butoir de dépôt — permet de trier/alerter par échéance imminente"},
+    {"champ": "subvention_rate_lower_bound", "type": "decimal|null", "description": "Borne inférieure du taux de subvention"},
+    {"champ": "subvention_rate_upper_bound", "type": "decimal|null", "description": "Borne supérieure du taux de subvention"},
+    {"champ": "contact", "type": "html", "description": "Informations de contact en texte libre"},
+    {"champ": "recurrence", "type": "string", "description": "'Ponctuelle' / 'Permanente' / récurrente — utile pour prioriser la veille sur les aides ponctuelles à échéance"},
+    {"champ": "project_examples", "type": "html", "description": "Exemples de projets déjà financés — utile pour évaluer la pertinence par analogie (ex. équipements scolaires, aires de jeux)"},
+    {"champ": "programs", "type": "array[string]", "description": "Programmes dont fait partie l'aide (ex. 'France Relance', 'France 2030')"},
+    {"champ": "date_created", "type": "datetime", "description": "Date de première saisie"},
+    {"champ": "date_updated", "type": "datetime", "description": "CHAMP CLÉ pour VEILLE-FI : date de dernière mise à jour — base de la déduplication / détection de nouveauté entre deux passages du scraper"}
+  ],
+
+  "filtres_a_verifier_au_premier_run": {
+    "constat": "La documentation officielle de /data/ ne détaille QUE le schéma de réponse, pas la liste exhaustive des paramètres de requête acceptés par l'endpoint /api/aids/ lui-même (ex. filtre par périmètre, par texte, par type de public). Je n'ai pas pu vérifier ces paramètres avec certitude depuis cet environnement.",
+    "piste_confirmee": "L'interface de recherche web (https://aides-territoires.beta.gouv.fr/aides/) utilise des paramètres d'URL du type ?targeted_audiences=epci — ces noms de champs correspondent exactement aux noms de champs JSON ci-dessus, ce qui suggère (sans garantie totale) que les mêmes paramètres fonctionnent sur l'endpoint /api/aids/.",
+    "strategie_recommandee_pour_claude_code": [
+      "1. Tester en priorité un appel filtré, ex. /api/aids/?version=1.1&targeted_audiences=communes — si la réponse est correctement filtrée (count plus petit, résultats cohérents), le filtre fonctionne.",
+      "2. Si le filtrage côté serveur ne fonctionne pas comme attendu : récupérer l'intégralité des résultats par pagination (suivre le champ `next` jusqu'à null) puis FILTRER CÔTÉ CLIENT en Python sur les champs `perimeter` (recherche des termes 'Réunion', '974', 'CIREST', 'Saint-Benoît', 'Outre-mer') et `targeted_audiences` (recherche de 'Communes', 'EPCI').",
+      "3. Mettre en cache local (fichier JSON ou SQLite) l'ensemble des résultats récupérés avec leur `date_updated`, pour ne re-télécharger en intégralité qu'à fréquence raisonnable (ex. hebdomadaire) et ne vérifier les nouveautés qu'en comparant `date_updated` entre passages.",
+      "4. Avec ~1650+ aides actives et une pagination Django REST Framework standard (probablement ~20 résultats/page), prévoir un budget de l'ordre de 80 à 100 requêtes pour un passage complet sans filtre serveur efficace — acceptable pour un usage hebdomadaire, mais à surveiller si la fréquence augmente."
+    ]
+  },
+
+  "limites_et_avertissements": [
+    "Le site précise explicitement être en construction active : le format de l'API peut changer sans préavis (cf. note officielle).",
+    "Toujours fixer le paramètre `version` dans les appels pour limiter l'impact d'une évolution de schéma.",
+    "Aucune garantie de taux de disponibilité n'est communiquée publiquement (mentionné comme 'Non communiqué' sur data.gouv.fr).",
+    "Respecter la mention de paternité et la date de mise à jour à chaque réutilisation publique des données (obligation de la Licence Ouverte v2.0), y compris dans les rapports internes diffusés si jamais ils sortent du cadre strictement interne à la mairie."
+  ],
+
+  "comparatif_vs_scraping_html": {
+    "avantages_api": [
+      "Données structurées et typées (dates, taux, listes) — pas de parsing HTML fragile",
+      "Champ `date_updated` permet une déduplication fiable entre deux passages",
+      "Couvre ~3000 dispositifs de ~600 porteurs en un seul point d'entrée, contre une seule page /programmes/ en scraping HTML qui n'expose qu'une liste de programmes-cadres (FEDER, LEADER, etc.) et pas les aides individuelles",
+      "Licence ouverte claire, pas d'ambiguïté juridique sur la réutilisation"
+    ],
+    "limites_par_rapport_au_scraping": [
+      "Ne couvre que les aides référencées SUR Aides-territoires — les appels à projets très récents ou très locaux (ex. AAP spécifiques Région Réunion ou Département 974) peuvent être publiés sur le site source avant ou sans jamais être repris sur Aides-territoires : le scraping direct de regionreunion.com et departement974.fr reste donc nécessaire en complément, pas remplacé par cette API.",
+      "Paramètres de filtre serveur non garantis avec certitude (cf. section précédente) — un filtrage côté client reste le scénario de repli le plus sûr."
+    ]
+  },
+
+  "decision": "Pour la source 'aides_territoires' uniquement : remplacer le scraping HTML par des appels à cette API REST. Pour toutes les autres sources du référentiel (Préfecture, Région Réunion, Département 974, ADEME, etc.), conserver le scraping HTML comme prévu, car aucune API équivalente n'a été identifiée pour elles."
+}

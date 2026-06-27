@@ -1,0 +1,73 @@
+name: VEILLE-FI - Collecte hebdomadaire
+
+# CONFORME À CAHIER_DES_CHARGES.md Section 5 (révisée le 27/06/2026).
+#
+# Ce workflow exécute le script de collecte VEILLE-FI automatiquement
+# chaque semaine, sur les serveurs de GitHub — aucune machine de la mairie
+# n'a besoin d'être allumée ou de faire quoi que ce soit. Le résultat
+# (page HTML dans docs/) est ensuite publié sur GitHub Pages, accessible
+# par tous les élus de la majorité sans rien installer.
+#
+# Gratuit pour un dépôt public (cf. décision actée sur la confidentialité,
+# Section 5 du cahier des charges : les informations sont publiques par
+# nature, leur diffusion ouverte ne pose pas de problème).
+
+on:
+  schedule:
+    # Tous les lundis à 05h00 UTC (≈ 08h00 à La Réunion, UTC+3) — avant le
+    # début de la semaine de travail, pour que la page soit à jour dès le
+    # lundi matin. GitHub prévient que les tâches planifiées peuvent être
+    # retardées en période de forte charge — ce n'est pas garanti à la
+    # minute, mais reste largement suffisant pour un usage hebdomadaire.
+    - cron: "0 5 * * 1"
+  # Permet aussi un déclenchement manuel depuis l'onglet Actions du dépôt
+  # GitHub, utile pour forcer une mise à jour entre deux passages planifiés
+  # (ex. après une correction de bug) sans attendre le lundi suivant.
+  workflow_dispatch:
+
+# Autorise ce workflow à écrire dans le dépôt (commit du nouveau cache et
+# de la page HTML) — nécessaire pour que GitHub Pages publie le résultat.
+permissions:
+  contents: write
+
+jobs:
+  collecte:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Récupérer le code du dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        run: |
+          pip install --upgrade pip
+          pip install requests beautifulsoup4 feedparser
+
+      - name: Lancer la collecte VEILLE-FI
+        run: python3 run_veille.py --force
+
+      - name: Valider que la page HTML a bien été générée
+        run: |
+          if [ ! -f docs/index.html ]; then
+            echo "ERREUR : docs/index.html n'a pas été généré — la collecte a probablement échoué avant son terme."
+            exit 1
+          fi
+          echo "Page HTML générée avec succès : $(wc -c < docs/index.html) octets."
+
+      - name: Publier les changements (cache + rapports + page HTML)
+        run: |
+          git config user.name "veille-fi-bot"
+          git config user.email "actions@github.com"
+          git add docs/ cache/ rapports/
+          if git diff --staged --quiet; then
+            echo "Aucun changement à publier ce passage."
+          else
+            git commit -m "VEILLE-FI: collecte automatique du $(date +%Y-%m-%d)"
+            git push
+          fi

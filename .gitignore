@@ -1,0 +1,20 @@
+# Fichiers Python générés à l'exécution — jamais utiles à versionner.
+__pycache__/
+*.pyc
+
+# IMPORTANT : cache/, rapports/ et docs/ ne sont PAS exclus ici, à dessein.
+# Le workflow GitHub Actions (.github/workflows/veille-hebdomadaire.yml)
+# committe ces dossiers à chaque passage pour que :
+#   - cache/veille_fi_cache.json persiste entre deux exécutions (sans ça,
+#     la déduplication recommencerait de zéro à chaque run et republierait
+#     tout comme "nouveau")
+#   - docs/index.html soit servi par GitHub Pages
+#   - rapports/*.md restent disponibles pour consultation locale/historique
+# Ne jamais ajouter ces trois dossiers ici sans avoir relu Section 5 du
+# cahier des charges au préalable.
+
+# Artefacts Node.js éventuels (utilisés uniquement pour du test ponctuel
+# en développement, jamais nécessaires pour l'exécution réelle de VEILLE-FI).
+node_modules/
+package-lock.json
+package.json

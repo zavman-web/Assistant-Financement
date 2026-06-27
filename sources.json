@@ -1,0 +1,150 @@
+{
+  "module": "VEILLE-FI",
+  "description": "Référentiel des sources officielles de financement public mobilisables par la Commune de Saint-Benoît (La Réunion) et ses partenaires (CIREST, SPL Estival). Ce fichier est la source de vérité consommée par le scraper VEILLE-FI.",
+  "version": "1.0",
+  "derniere_maj_manuelle": "2026-06-22",
+  "note_methodologique": "Les sélecteurs CSS/XPath indiqués sont des points de départ identifiés manuellement. Le site cible peut changer sa structure HTML sans préavis : le scraper doit logguer les échecs de parsing (page récupérée mais sélecteur introuvable) séparément des échecs réseau, et alerter Xavier pour révision plutôt que d'échouer silencieusement.",
+  "sources": [
+    {
+      "id": "aides_territoires",
+      "nom": "Aides-territoires",
+      "echelon": "multi-financeurs (État, Europe, organismes, collectivités)",
+      "url_base": "https://aides-territoires.beta.gouv.fr",
+      "url_a_scraper": "https://aides-territoires.beta.gouv.fr/programmes/",
+      "type_acces": "api_rest",
+      "acces_api": {
+        "disponible": true,
+        "statut": "confirmé et documenté publiquement — voir api_aides_territoires.json dans ce même répertoire pour le détail complet (endpoint, champs, pagination, filtres, licence)",
+        "endpoint_base": "https://aides-territoires.beta.gouv.fr/api/aids/",
+        "version_a_utiliser": "voir api_aides_territoires.json — toujours fixer le paramètre version dans l'URL",
+        "auth": "aucune authentification requise pour la lecture en l'état constaté ; pas de clé API nécessaire pour ce niveau d'usage",
+        "licence": "Licence Ouverte v2.0 (Etalab) — réutilisation libre sous réserve de mention de la paternité et de la date de mise à jour",
+        "recommandation": "Remplacer le scraping HTML par des appels à cette API pour la source Aides-territoires. Conserver /programmes/ uniquement comme repli (fallback) si l'API devient indisponible."
+      },
+      "frequence_veille_recommandee": "hebdomadaire",
+      "filtres_recommandes": ["La Réunion", "Outre-mer", "commune", "EPCI", "974"],
+      "thematiques_prioritaires": ["aires de jeux / équipements sportifs", "voirie rurale", "transition écologique", "ingénierie financière", "FEADER", "fonds vert"],
+      "structure_page_constatee": "Non pertinent en mode API. Le fallback HTML (/programmes/) reste : liste de blocs 'programme' (titre + description courte + lien), sans pagination visible.",
+      "priorite": 1
+    },
+    {
+      "id": "prefecture_reunion",
+      "nom": "Préfecture de La Réunion — Appels à projets",
+      "echelon": "État (déconcentré)",
+      "url_base": "https://www.reunion.gouv.fr",
+      "url_a_scraper": "https://www.reunion.gouv.fr/Publications/Appels-a-projets",
+      "type_acces": "scraping_html",
+      "frequence_veille_recommandee": "hebdomadaire",
+      "thematiques_prioritaires": ["DETR", "DSIL", "fonds vert", "aide au fret", "égalité femmes-hommes", "prévention délinquance", "environnement/développement durable"],
+      "structure_page_constatee": "VÉRIFIÉE LE 24/06/2026 par fetch réel. Domaine CORRECT : reunion.gouv.fr (PAS la-reunion.gouv.fr comme précédemment renseigné, qui était une URL erronée). Site sous Design System de l'État (DSFR). Structure très propre : liste d'articles avec titre + date de publication ('Publié le JJ/MM/AAAA'), pagination classique par offset numérique (/(offset)/10, /(offset)/20...). Flux actif constaté (dernier item publié le 01/06/2026 au moment de la vérification). IMPORTANT : contrairement à Département 974, la date limite de dépôt n'apparaît PAS dans cette page de liste — seulement la date de PUBLICATION de l'article. Un fetch de second niveau (ouverture de chaque fiche) est nécessaire pour récupérer l'échéance réelle, comme pour Région Réunion.",
+      "ressource_complementaire": "La page liste un article 'Calendrier des appels à projets de l'État à La Réunion en 2026' qui pourrait constituer une vue de synthèse utile — à vérifier manuellement en complément, pas encore intégré au scraping automatique.",
+      "note_decouverte": "L'URL et le domaine précédemment renseignés (la-reunion.gouv.fr/Actions-de-l-Etat/Collectivites-territoriales) étaient incorrects. La page DETR/DSIL spécifique (https://www.reunion.gouv.fr/Actions-de-l-Etat/Collectivites-territoriales/Subventions-de-l-Etat/Appel-a-projets-DSIL-2026) propose même un lien de dépôt dédié à l'arrondissement de Saint-Benoît — pertinent à surveiller en complément pour les dossiers DETR/DSIL spécifiquement.",
+      "priorite": 1
+    },
+    {
+      "id": "europe_en_france",
+      "nom": "Europe en France (portail national des fonds européens)",
+      "echelon": "Europe",
+      "url_base": "https://www.europe-en-france.gouv.fr",
+      "url_a_scraper": "https://www.europe-en-france.gouv.fr/fr/appels-projets",
+      "type_acces": "scraping_html",
+      "frequence_veille_recommandee": "mensuelle",
+      "thematiques_prioritaires": ["FEDER", "FEADER", "FSE+", "Interreg"],
+      "structure_page_constatee": "VÉRIFIÉE LE 24/06/2026 par fetch réel — URL CORRIGÉE : c'est /fr/appels-projets (sans le 'à', sans tiret) et non /fr/appels-a-projets comme précédemment renseigné. Page confirmée existante (333 appels à projets annoncés au moment de la vérification, dont une partie reprise d'Aides-territoires). LIMITE IMPORTANTE CONSTATÉE : le fetch direct n'a renvoyé que le code JavaScript d'animation du header (SVGator), pas le contenu utile de la liste — signe probable que la liste elle-même est chargée dynamiquement en JS après le rendu initial de la page. Un simple requests.get() risque de ne pas suffire pour cette source ; à confirmer avec le mode --diagnostic et, si confirmé, envisager un rendu JS (ex. Selenium/Playwright) ou chercher une API/flux alternatif avant d'investir dans l'extraction HTML classique.",
+      "priorite": 2
+    },
+    {
+      "id": "region_reunion_aap",
+      "nom": "Région Réunion — Appels à projets",
+      "echelon": "Région",
+      "url_base": "https://regionreunion.com",
+      "url_a_scraper": "https://regionreunion.com/aides-services/appels-a-projets/",
+      "type_acces": "scraping_html",
+      "frequence_veille_recommandee": "hebdomadaire",
+      "thematiques_prioritaires": ["FEDER-FSE+ Réunion 2021-2027", "FEAMPA", "rural/agriculture", "culture/sport", "économie/innovation", "environnement/biodiversité"],
+      "structure_page_constatee": "Liste d'articles, chacun avec : thématique (catégorie), titre de l'AAP/AMI, lien vers fiche détaillée, parfois date limite de dépôt affichée en tête de fiche. Pas de date structurée systématique en liste — la date limite est dans la page fiche, donc le scraper doit suivre chaque lien pour extraire l'échéance.",
+      "priorite": 1
+    },
+    {
+      "id": "region_reunion_feder",
+      "nom": "Région Réunion — Programme opérationnel FEDER-FSE+ 2021-2027 (autorité de gestion)",
+      "echelon": "Europe (géré par la Région)",
+      "url_base": "https://regionreunion.com",
+      "url_a_scraper": "https://regionreunion.com/aides-services/appels-a-projets/",
+      "type_acces": "scraping_html",
+      "frequence_veille_recommandee": "mensuelle",
+      "note": "Mêmes pages que region_reunion_aap ; entrée séparée pour distinguer le suivi thématique FEDER dans les rapports VEILLE-FI.",
+      "priorite": 2
+    },
+    {
+      "id": "departement_974",
+      "nom": "Département de La Réunion — Avis, Appels à projets, Enquêtes publiques",
+      "echelon": "Département",
+      "url_base": "https://www.departement974.fr",
+      "url_a_scraper": "https://www.departement974.fr/avis-appels-projets-enquetes-publiques",
+      "type_acces": "scraping_html",
+      "frequence_veille_recommandee": "hebdomadaire",
+      "thematiques_prioritaires": ["agriculture/FEADER", "culture", "social/autonomie", "Pacte de Solidarité Territoriale (aide aux communes)", "budget d'initiative citoyenne"],
+      "structure_page_constatee": "VÉRIFIÉE LE 24/06/2026 par fetch réel. Site Drupal 9. Liste d'articles datés (mars-juin 2026 au moment de la vérification, donc flux actif), chacun avec : vignette image, tag thématique (#Aide agricole, #Actualité, #Avis Appels à projets Enquêtes publiques...), date de publication, titre, court résumé incluant SOUVENT la date limite en clair dans le texte (patron 'Date limite : ...' ou 'Clôture de l'appel à projets : ... à ...h00'). Les appels clos sont explicitement préfixés '(Clôturer)' ou '(Clôturé)' dans le titre — filtre fiable pour ne garder que les appels actifs sans même comparer de dates. Pagination via bouton JS 'Afficher plus de contenus' (chargement dynamique, probable AJAX) — la première vingtaine d'items est cependant déjà présente dans le HTML initial sans interaction JS.",
+      "note_decouverte": "L'URL précédemment renseignée (page d'accueil du site) était imprécise. La page /aide-aux-communes identifiée en parallèle ne contient que des articles d'actualité 2018-2019 sur les signatures de Pacte de Solidarité Territoriale (PST) — intéressant pour comprendre le dispositif mais PAS un flux à scraper en continu (aucune nouveauté n'y apparaît). La bonne page pour la veille hebdomadaire est /avis-appels-projets-enquetes-publiques, identifiée via le menu 'Cofinancé/Projets/Enquêtes' du site.",
+      "priorite": 1
+    },
+    {
+      "id": "ademe",
+      "nom": "ADEME — Agir pour la transition écologique (collectivités)",
+      "echelon": "Établissement public national",
+      "url_base": "https://agirpourlatransition.ademe.fr",
+      "url_a_scraper": "https://agirpourlatransition.ademe.fr/collectivites/aides-financieres/catalogue",
+      "type_acces": "flux_rss",
+      "acces_rss": {
+        "url": "https://agirpourlatransition.ademe.fr/collectivites/rss/appels-a-projet",
+        "statut": "VÉRIFIÉ LE 24/06/2026 par fetch réel — flux RSS valide (content-type application/rss+xml), réactualisé quotidiennement selon la page officielle /flux-rss-agir. Un flux distinct existe pour les entreprises (non pertinent ici) : /entreprises/rss/appels-a-projet.",
+        "recommandation": "Utiliser ce flux RSS comme méthode PRINCIPALE de collecte pour cette source, plutôt que le scraping HTML de la page catalogue. Un flux RSS est structurellement plus fiable (format XML standardisé, pas de risque de changement de mise en page CSS/HTML). Garder /collectivites/aides-financieres/catalogue en repli (fallback) si le flux RSS devient indisponible."
+      },
+      "frequence_veille_recommandee": "hebdomadaire",
+      "filtres_recommandes": ["La Réunion", "Outre-mer", "toutes les régions"],
+      "thematiques_prioritaires": ["transition écologique", "énergie", "déchets/économie circulaire", "mobilité", "qualité de l'air", "urbanisme/bâtiment"],
+      "structure_page_catalogue_constatee": "VÉRIFIÉE LE 24/06/2026 par fetch réel (en repli du flux RSS) : page catalogue avec 60 dispositifs au moment de la vérification, filtrable par URL avec paramètre localisation (ex. ?localisation[La Réunion]=La Réunion — équivalent CONFIRMÉ d'un vrai filtre géographique natif, contrairement à Aides-territoires où ce filtre n'a jamais été confirmé). Chaque item affiche un statut ('Appel à projet' ou 'Aide'), une date limite en clair ('Ouvert jusqu'au JJ mois AAAA'), et la/les région(s) concernée(s). Page séparée pour les appels clos avec lauréats : /collectivites/aides-financieres/catalogue-aides-closes (utile pour du contexte, pas pour la veille active).",
+      "priorite": 1
+    },
+    {
+      "id": "banque_des_territoires",
+      "nom": "Banque des Territoires (Caisse des Dépôts) — Appels à candidatures France 2030",
+      "echelon": "Organisme public national",
+      "url_base": "https://www.banquedesterritoires.fr",
+      "url_a_scraper": "https://www.banquedesterritoires.fr/france-2030/appels-projets-en-cours",
+      "type_acces": "scraping_html",
+      "frequence_veille_recommandee": "mensuelle",
+      "thematiques_prioritaires": ["ingénierie financière", "prêts collectivités", "investissement local", "France 2030"],
+      "structure_page_constatee": "VÉRIFIÉE LE 24/06/2026 par fetch réel. URL précédente (/nos-offres) incorrecte — corrigée vers /france-2030/appels-projets-en-cours. Structure : liste regroupée par grande thématique (Agriculture, Culture, Education, Multithématique, Technologies...), chaque item avec un statut explicite ('Appel à projet' / 'Appel manifestation intérêt' / 'Information'). LIMITES CONSTATÉES : (1) aucune date limite n'apparaît dans la liste — fetch de second niveau nécessaire si activé ; (2) aucun item visible dans l'échantillon vérifié n'était spécifique à La Réunion (vus : Auvergne-Rhône-Alpes, Bretagne, Martinique, Mayotte, Polynésie française...) — cette source est probablement moins riche en opportunités directement actionnables pour Saint-Benoît que les autres, à confirmer sur la durée.",
+      "note_decouverte": "Un flux RSS existe (/flux-rss) mais il s'agit du fil d'actualité Localtis (presse territoriale), PAS d'un flux d'appels à projets structuré — ne pas le confondre avec le cas ADEME où un vrai flux RSS dédié aux appels à projets a été trouvé. Aucun flux RSS équivalent identifié pour les appels à projets eux-mêmes.",
+      "priorite": 4
+    },
+    {
+      "id": "caf_reunion",
+      "nom": "CAF Réunion — Lettres aux partenaires (PDF mensuel)",
+      "echelon": "Organisme de protection sociale (branche Famille)",
+      "url_base": "https://www.caf.fr",
+      "url_a_scraper": "https://www.caf.fr/professionnels/offres-et-services/caf-de-la-reunion/partenaires-locaux/actualites-partenaires",
+      "type_acces": "scraping_html",
+      "frequence_veille_recommandee": "mensuelle",
+      "thematiques_prioritaires": ["petite enfance", "parentalité", "CLAS (accompagnement scolaire)", "animation de la vie sociale", "jeunesse", "action sociale"],
+      "structure_page_constatee": "VÉRIFIÉE LE 24/06/2026 par fetch réel — CONSTAT IMPORTANT : contrairement à l'attente initiale, il n'existe PAS de page-liste centralisée avec dates pour les appels à projets CAF Réunion. La page /partenaires-locaux est un menu de navigation thématique (1-ENFANCE, 2-JEUNESSE, 3-PARENTALITE...) vers des fiches statiques individuelles (ex. 'Appel à projet : fonds d'innovation pour la petite enfance'), sans flux chronologique commun. La page nationale /professionnels/offres-et-services/dispositifs-partenaires est un catalogue PERMANENT de dispositifs (descriptions stables type 'Centre social', 'Assistant maternel'), PAS des appels à projets datés avec échéances — à ne pas utiliser pour cette veille malgré son apparence de liste. La vraie source de nouveauté semble être les 'Lettres aux partenaires', publiées en PDF environ tous les 2-3 mois (Lettre n°41 vue en avril 2026), répertoriées sur /partenaires-locaux/actualites-partenaires.",
+      "limite_majeure": "Cette source ne se prête pas à un scraping HTML structuré comme Région Réunion ou Département 974. Deux options pour l'exploiter : (1) scraper la page actualites-partenaires pour détecter la sortie d'une nouvelle Lettre aux partenaires (déclenchement peu fréquent, ~mensuel) puis signaler son existence sans extraction automatique du contenu PDF ; (2) se limiter à un contrôle manuel ponctuel de cette source plutôt qu'une automatisation complète. Fréquence abaissée à mensuelle en conséquence (au lieu d'hebdomadaire initialement prévu).",
+      "priorite": 3
+    },
+    {
+      "id": "cerema",
+      "nom": "CEREMA — Mot-clé Appel à projet",
+      "echelon": "Établissement public national",
+      "url_base": "https://www.cerema.fr",
+      "url_a_scraper": "https://www.cerema.fr/fr/mots-cles/appel-projet",
+      "type_acces": "scraping_html",
+      "frequence_veille_recommandee": "trimestrielle",
+      "thematiques_prioritaires": ["normes techniques équipements publics", "expertise aménagement"],
+      "structure_page_constatee": "VÉRIFIÉE LE 24/06/2026 par fetch réel — URL CORRIGÉE : la racine du site (www.cerema.fr) n'est pas la bonne page (explique le bruit de navigation massif constaté en diagnostic, 157 candidats). La page /fr/mots-cles/appel-projet est une page d'agrégation Drupal dédiée, structure propre (liste d'articles datés). CONSTAT IMPORTANT : le contenu y est très majoritairement ANCIEN — sur l'échantillon vérifié, un seul item daté de 2026 (22/01/2026), le reste s'étalant de 2018 à 2024. Ce n'est pas un flux de veille active comme Région Réunion ou Département 974 ; à utiliser avec un seuil de pertinence temporelle strict (ignorer tout ce qui n'est pas récent) plutôt que de s'attendre à des nouveautés fréquentes. Un flux RSS générique existe (/fr/flux-rss) mais n'a pas été vérifié comme étant spécifique aux appels à projets.",
+      "note": "Pertinent surtout pour le dossier équipements de jeux (CE / EN 1176) plutôt que pour de la veille de financement pur.",
+      "priorite": 4
+    }
+  ]
+}
