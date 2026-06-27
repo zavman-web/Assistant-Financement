@@ -296,12 +296,12 @@
 ### Préfecture de La Réunion — Appels à projets
 - Statut : `succes`
 - Items trouvés ce passage : 10
-- Nouveaux items : 10
+- Nouveaux items : 0
 
 ### Europe en France (portail national des fonds européens)
 - Statut : `succes`
 - Items trouvés ce passage : 143
-- Nouveaux items : 143
+- Nouveaux items : 0
 
 ### Région Réunion — Appels à projets
 - Statut : `echec_reseau`
@@ -314,22 +314,22 @@
 ### Département de La Réunion — Avis, Appels à projets, Enquêtes publiques
 - Statut : `succes`
 - Items trouvés ce passage : 14
-- Nouveaux items : 14
+- Nouveaux items : 0
 
 ### Banque des Territoires (Caisse des Dépôts) — Appels à candidatures France 2030
 - Statut : `succes`
 - Items trouvés ce passage : 26
-- Nouveaux items : 26
+- Nouveaux items : 0
 
 ### CAF Réunion — Lettres aux partenaires (PDF mensuel)
 - Statut : `succes`
 - Items trouvés ce passage : 23
-- Nouveaux items : 23
+- Nouveaux items : 0
 
 ### CEREMA — Mot-clé Appel à projet
 - Statut : `succes`
 - Items trouvés ce passage : 74
-- Nouveaux items : 74
+- Nouveaux items : 0
 </pre>
   </details>
 </main>
@@ -401,11 +401,27 @@
 
   function filtrerDonnees(texteRecherche) {
     if (!texteRecherche) return donnees;
+    // CORRIGÉ LE 27/06/2026 suite à un retour utilisateur en conditions
+    // réelles (première vraie utilisation de la page publiée) : taper
+    // "Sport" remontait aussi "Transport" à cause d'un matching par
+    // sous-chaîne brute (.includes()) — exactement la même classe de bug
+    // que celui corrigé dans categorisation.py (mot in texte). Ici, la
+    // contrainte est différente : on veut quand même permettre une
+    // recherche par préfixe utile (taper "agric" doit trouver "agricole"),
+    // donc on découpe le texte cible en mots et on vérifie qu'au moins un
+    // mot COMMENCE PAR le terme recherché — pas une regex avec échappement
+    // (une première tentative avec regex a généré un code JS cassé à cause
+    // d'échappements en cascade entre Python et JavaScript ; cette approche
+    // par découpage de chaîne est plus simple et ne dépend d'aucun
+    // échappement de caractères spéciaux).
     const q = texteRecherche.toLowerCase();
+    const unMotCommencePar = (texte) =>
+      texte.toLowerCase().split(/[^a-z0-9àâäéèêëïîôöùûüç]+/i).some(mot => mot.startsWith(q));
+
     return donnees.filter(d =>
-      d.titre.toLowerCase().includes(q) ||
-      d.source.toLowerCase().includes(q) ||
-      d.tags.some(t => t.toLowerCase().includes(q))
+      unMotCommencePar(d.titre) ||
+      unMotCommencePar(d.source) ||
+      d.tags.some(t => unMotCommencePar(t))
     );
   }
 
