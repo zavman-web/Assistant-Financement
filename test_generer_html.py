@@ -99,6 +99,14 @@ def test_recherche_par_prefixe_pas_par_sous_chaine():
     au moment de la correction ; ce test Python vérifie seulement la
     présence de la bonne logique dans le code généré, pas le comportement
     DOM complet (qui nécessiterait Node, non garanti disponible partout).
+
+    SECONDE CORRECTION (même session, 27/06/2026) : même après la première
+    correction, "Sport" remontait encore des dispositifs sans rapport (ex.
+    "PPPA" patrimoine/culture), car le nom de la thématique elle-même
+    ("Culture / Sport / Jeunesse") contient le mot "Sport" et la recherche
+    fouillait aussi dans les tags. Décision validée par Xavier : la
+    recherche ne doit porter QUE sur le titre du dispositif, pas sur le nom
+    de la catégorie ni sur la source.
     """
     html_genere = generer_page_html([], "test")
     assert "unMotCommencePar" in html_genere, (
@@ -109,6 +117,15 @@ def test_recherche_par_prefixe_pas_par_sous_chaine():
     assert ".includes(q)" not in html_genere or "catch (e)" not in html_genere, (
         "Vérifie qu'il ne reste pas un ancien chemin de code utilisant "
         ".includes() pour le filtrage de recherche principal."
+    )
+    assert "d.tags.some(t => unMotCommencePar(t))" not in html_genere, (
+        "RÉGRESSION : la recherche ne doit plus fouiller dans les tags "
+        "thématiques — sinon 'Sport' remonte à tort tout ce qui est classé "
+        "'Culture / Sport / Jeunesse', y compris des dispositifs de "
+        "patrimoine/culture sans rapport (cas réel observé : 'PPPA')."
+    )
+    assert "donnees.filter(d => unMotCommencePar(d.titre))" in html_genere, (
+        "RÉGRESSION : la recherche doit porter uniquement sur le titre du dispositif."
     )
     print("OK: test_recherche_par_prefixe_pas_par_sous_chaine")
 

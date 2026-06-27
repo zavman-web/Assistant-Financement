@@ -656,3 +656,17 @@ document avec Xavier, puis seulement ensuite coder.
   arbitraire en milieu de mot. Vérifié par un vrai test DOM (jsdom) sur les
   cas exacts signalés, conservé comme test Python de présence de la bonne
   logique (sans dépendance Node) dans `test_generer_html.py`.
+- 27/06/2026 (suite, même session) — Après la correction ci-dessus, Xavier
+  signale persistante la confusion : "Sport" remontait encore un dispositif
+  "PPPA" sans rapport (patrimoine/culture). Cause distincte de la
+  précédente : le nom de la thématique elle-même, "Culture / Sport /
+  Jeunesse", contient le mot "Sport", et la recherche fouillait aussi dans
+  les tags affichés — donc tout dispositif catégorisé dans cette thématique
+  composite remontait, même sans rapport réel avec le sport. **Décision
+  validée par Xavier** : la recherche ne doit porter QUE sur le titre du
+  dispositif, jamais sur le nom de la catégorie ni sur la source. Corrigé
+  en retirant `d.tags.some(...)` et `unMotCommencePar(d.source)` de
+  `filtrerDonnees()` — ne reste que `unMotCommencePar(d.titre)`. Vérifié
+  par un vrai test DOM reproduisant le cas exact (titre "PPPA..." catégorisé
+  Culture/Sport/Jeunesse via le mot "artistique", recherche "Sport" ne doit
+  retrouver que les dispositifs dont le titre contient vraiment "sport").
