@@ -414,15 +414,21 @@
     // d'échappements en cascade entre Python et JavaScript ; cette approche
     // par découpage de chaîne est plus simple et ne dépend d'aucun
     // échappement de caractères spéciaux).
+    //
+    // CORRECTION SUPPLÉMENTAIRE LE 27/06/2026 (même session) : "Sport"
+    // remontait aussi des dispositifs de patrimoine/culture (ex. "PPPA")
+    // car le mot "Sport" apparaît dans le NOM de la thématique "Culture /
+    // Sport / Jeunesse" elle-même, recherchée via d.tags. Décision validée
+    // par Xavier : la recherche ne doit porter QUE sur le titre du
+    // dispositif, pas sur le nom de la catégorie ni sur la source —
+    // chercher "Sport" doit trouver des dispositifs dont le TITRE parle de
+    // sport, pas tout ce qui est rangé dans une catégorie qui contient ce
+    // mot dans son intitulé composite.
     const q = texteRecherche.toLowerCase();
     const unMotCommencePar = (texte) =>
       texte.toLowerCase().split(/[^a-z0-9àâäéèêëïîôöùûüç]+/i).some(mot => mot.startsWith(q));
 
-    return donnees.filter(d =>
-      unMotCommencePar(d.titre) ||
-      unMotCommencePar(d.source) ||
-      d.tags.some(t => unMotCommencePar(t))
-    );
+    return donnees.filter(d => unMotCommencePar(d.titre));
   }
 
   function rendre() {
